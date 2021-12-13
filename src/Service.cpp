@@ -47,6 +47,10 @@ void Service::run() const
             idle_ = true;
             message_queue_.push(id_);
         }
+        else
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
     }
 }
 

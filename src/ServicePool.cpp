@@ -17,7 +17,10 @@ ServicePool::~ServicePool() {}
 
 void ServicePool::add_service(int socket)
 {
-    while(free_services_.empty());
+    while(free_services_.empty())
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     int id;
     free_services_.pop(id);
     

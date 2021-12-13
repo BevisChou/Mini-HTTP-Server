@@ -78,10 +78,22 @@ void Server::serve()
 
     while(active_)
     {
-        data_sock = accept(socket_, NULL, NULL);
-        if(!(data_sock < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)))
+        // Low CPU usage guaranteed.
+        if((data_sock = accept_periodically()) >= 0)
         {
             service_pool_.add_service(data_sock);
         }
     }
+}
+
+int Server::accept_periodically()
+{
+    int ret = accept(socket_, NULL, NULL);
+
+    if(ret < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    return ret;
 }

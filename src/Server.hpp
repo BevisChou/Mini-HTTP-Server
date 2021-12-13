@@ -10,6 +10,7 @@ public:
     void run();
 private:
     void serve();
+    int accept_periodically();
     int socket_;
     bool active_;
     ThreadSafeDict<std::string, std::string> dict_;
