@@ -2,9 +2,11 @@
 
 const int MAX_QUEUE_SIZE = 100;
 
-Server::Server(int port, int service_pool_size) : 
-    service_pool_(service_pool_size, dict_), 
-    active_(true) 
+Server::Server(
+    int port, 
+    int service_pool_size) : 
+        service_pool_(service_pool_size, dict_), 
+        active_(true) 
 {
     if ((socket_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
     {
@@ -88,11 +90,30 @@ void Server::serve()
 
 int Server::accept_periodically()
 {
-    int ret = accept(socket_, NULL, NULL);
+    int ret;
 
-    if(ret < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+    pollfd fds[1];
+    memset(fds, 0 , sizeof(fds));
+    fds[0].fd = socket_;
+    fds[0].events = POLLIN;
+    
+    int rc = poll(fds, 1, 100);
+
+    if (rc < 0)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        throw -1;
+    }
+    else if (rc == 0)
+    {
+        ret = -1;
+    }
+    else
+    {
+        ret = accept(socket_, NULL, NULL);
+        if (ret < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+        {
+            throw -1;
+        }
     }
 
     return ret;

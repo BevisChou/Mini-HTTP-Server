@@ -1,4 +1,3 @@
-#include "ThreadSafeQueue.hpp"
 #include "ThreadSafeDict.hpp"
 
 #include <unistd.h>
@@ -8,35 +7,48 @@
 
 #include <thread>
 #include <mutex>
-#include <chrono>
+#include <condition_variable>
+#include <atomic>
+
 #include <string>
 #include <cstring>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
+const int INVALID_SOCKET = -1;
+
 const int BUFFER_SIZE = 100000;
 
 class Service {
 public:
     Service(
-        int, 
-        ThreadSafeQueue<int>&, 
-        const ThreadSafeDict<std::string, std::string>&);
+        const ThreadSafeDict<std::string, std::string>&,
+        std::atomic<int>&,
+        std::condition_variable&,
+        std::mutex&,
+        bool&,
+        std::condition_variable&,
+        std::mutex&,
+        std::atomic<int>&);
     Service(Service&&);
     ~Service();
-    void assign_work(int);
 private:
-    void run() const;
+    void run();
     void serve() const;
-    int id_;
-    int socket_;
-    bool active_;
 
-    mutable bool idle_;
+    const std::atomic<int>& incoming_socket_;
+    int socket_;
+    const bool& active_;
+
+    std::condition_variable& signal_;
+    std::mutex& signal_mutex_;
+
+    std::condition_variable& idle_signal_;
+    std::mutex& idle_signal_mutex_;
+    std::atomic<int>& count_;
 
     char buffer_[BUFFER_SIZE];
-    ThreadSafeQueue<int>& message_queue_;
     const ThreadSafeDict<std::string, std::string>& dict_;
     std::thread thread_;
 };
