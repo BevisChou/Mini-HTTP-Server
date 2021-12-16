@@ -2,11 +2,10 @@
 
 const int MAX_QUEUE_SIZE = 100;
 
-Server::Server(
-    int port, 
-    int service_pool_size) : 
-        service_pool_(service_pool_size, dict_), 
-        active_(true) 
+Server::Server(int port, int pool_size, Mapping& mapping) : 
+        active_(true),
+        mapping_(mapping),
+        pool_(pool_size, mapping_)
 {
     if ((socket_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
     {
@@ -51,26 +50,7 @@ void Server::run()
     while(true)
     {
         std::cin >> opt;
-        switch (opt)
-        {
-            case 'p':
-                std::cin >> in1 >> in2;
-                dict_.put(in1, in2);
-                break;
-            case 'g':
-                std::cin >> in1;
-                std::cout << dict_.get(in1) << std::endl;
-                break;
-            case 'r':
-                std::cin >> in1;
-                dict_.remove(in1);
-                break;
-            case 'q':
-                active_ = false;
-                return;
-            default:
-                break;
-        }
+        // Pending.
     }
 }
 
@@ -80,10 +60,9 @@ void Server::serve()
 
     while(active_)
     {
-        // Low CPU usage guaranteed.
         if((data_sock = accept_periodically()) >= 0)
         {
-            service_pool_.add_service(data_sock);
+            pool_.add_connection(data_sock);
         }
     }
 }

@@ -1,14 +1,12 @@
-#include "Service.hpp"
+#include "Connection.hpp"
 
 #include <vector>
 
-class ServicePool {
+class Pool {
 public:
-    ServicePool(
-        int, 
-        const ThreadSafeDict<std::string, std::string>& dict);
-    ~ServicePool();
-    void add_service(int);
+    Pool(int, const Mapping&);
+    ~Pool();
+    void add_connection(int);
 private:
     std::condition_variable signal_;
     std::mutex signal_mutex_;
@@ -21,5 +19,5 @@ private:
     std::atomic<int> socket_;
     std::atomic<int> count_;
 
-    std::vector<Service> service_entities_;
+    std::vector<Connection> connections_;
 };

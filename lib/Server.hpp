@@ -1,11 +1,11 @@
-#include "ServicePool.hpp"
+#include "Pool.hpp"
 
 #include <sys/poll.h>
-#include <sys/time.h>
+#include <iostream>
 
 class Server {
 public:
-    Server(int, int);
+    Server(int, int, Mapping&);
     ~Server();
     void run();
 private:
@@ -13,7 +13,7 @@ private:
     int accept_periodically();
     int socket_;
     bool active_;
-    ThreadSafeDict<std::string, std::string> dict_;
+    Mapping& mapping_;
     std::thread listener_;
-    ServicePool service_pool_;
+    Pool pool_;
 };

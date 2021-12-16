@@ -1,16 +1,14 @@
-#include "ServicePool.hpp"
+#include "Pool.hpp"
 
-ServicePool::ServicePool(
-    int pool_size, 
-    const ThreadSafeDict<std::string, std::string>& dict) :
+Pool::Pool(int pool_size, const Mapping& mapping) :
         socket_(INVALID_SOCKET),
         active_(true),
         count_(pool_size)
 {
-    service_entities_.reserve(pool_size);
+    connections_.reserve(pool_size);
     for(int i = 0; i < pool_size; i++) {
-        service_entities_.emplace_back(
-            dict, 
+        connections_.emplace_back(
+            mapping, 
             socket_,
             signal_,
             signal_mutex_,
@@ -21,13 +19,13 @@ ServicePool::ServicePool(
     }
 }
 
-ServicePool::~ServicePool()
+Pool::~Pool()
 {
     active_ = false;
     signal_.notify_all();
 }
 
-void ServicePool::add_service(int socket)
+void Pool::add_connection(int socket)
 {
     std::unique_lock<std::mutex> lk(idle_signal_mutex_);
 
