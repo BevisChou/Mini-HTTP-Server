@@ -28,17 +28,10 @@ Pool::~Pool()
 void Pool::add_connection(int socket)
 {
     std::unique_lock<std::mutex> lk(idle_signal_mutex_);
-
     idle_signal_.wait(lk, [this]{return count_ > 0;});
-    
-    if(fcntl(socket, F_SETFL, fcntl(socket, F_GETFL, 0) & ~O_NONBLOCK) < 0)
-    {
-        throw -1;
-    }
 
     socket_ = socket;
     count_--;
 
-    lk.unlock();
     signal_.notify_one();
 }

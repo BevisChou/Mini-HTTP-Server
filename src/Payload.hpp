@@ -31,11 +31,15 @@ enum class Status : uint8_t
 
 class Request {
 public:
+    void set_method(Method);
     Method method() const;
+    void set_url(std::string);
     std::string url() const;
+    void put(std::string, std::string);
     std::string get(std::string) const;
     ContentType content_type();
     std::string body();
+    static std::vector<std::string> str_method_;
 private:
     Method method_;
     std::string url_;
@@ -47,6 +51,13 @@ private:
 class Response {
 public:
     Response(std::string, ContentType, Status = Status::REQUEST_SUCCEEDED);
+    Status status() const;
+    std::string body() const;
+    ContentType content_type() const;
+    static std::string version_;
+    static std::vector<std::string> str_code_;
+    static std::vector<std::string> str_message_;
+    static std::vector<std::string> str_content_type_;
 private:
     Status status_;
     std::string body_;

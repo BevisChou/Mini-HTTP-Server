@@ -46,11 +46,20 @@ Server::~Server()
 void Server::run()
 {
     char opt;
-    std::string in1, in2;
     while(true)
     {
         std::cin >> opt;
-        // Pending.
+        switch (opt)
+        {
+            case 'i':
+                mapping_.show();
+                break;
+            case 'q':
+                active_ = false;
+                return;
+            default:
+                break;
+        }
     }
 }
 

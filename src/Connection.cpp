@@ -50,13 +50,13 @@ void Connection::run()
         if(active_)
         {
             socket_ = incoming_socket_;
-            // signal_lk.unlock();
+            signal_lk.unlock();
 
             serve();
+            close(socket_);
             count_++;
             
             idle_signal_.notify_one();
-            close(socket_);
         }
     }
 }
@@ -64,13 +64,37 @@ void Connection::run()
 void Connection::serve() const
 {
     std::memset((void *)buffer_, 0 , sizeof(buffer_));
-    read(socket_ , (void *)buffer_, BUFFER_SIZE);
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Must take network delay into account.
+    while(read(socket_ , (void *)buffer_, BUFFER_SIZE) > 0); // Chrome might connect with you then sends nothing.
+    
     std::string request_str(buffer_);
+
+    if(!Interpreter::is_valid_request(request_str)) return;
+
     Request request = Interpreter::string_to_request(request_str);
 
-    auto functor = mapping_.get_service(request.url(), request.method());
-    std::string response_str = Interpreter::response_to_string(functor(request));
+    if(request.method() == Method::POST && !Interpreter::is_complete_request(request_str))
+    {
+        // Safari might split a POST request.
+        std::memset((void *)buffer_, 0 , sizeof(buffer_));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Must take network delay into account.
+        while(read(socket_ , (void *)buffer_, BUFFER_SIZE) > 0);
+
+        std::string request_body(buffer_);
+        Interpreter::fill_request(request, request_body);
+    }
+
+    std::string response_str;
+    try {
+        auto functor = mapping_.get_service(request.url(), request.method());
+        response_str = Interpreter::response_to_string(functor(request));
+    }
+    catch (...)
+    {
+        Response response("", ContentType::TEXT_PLAIN, Status::PAGE_NOT_FOUND);
+        response_str = Interpreter::response_to_string(response);
+    }
 
     std::memset((void *)buffer_, 0 , sizeof(buffer_));
     std::memcpy((void *)buffer_, response_str.c_str(), response_str.size());
